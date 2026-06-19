@@ -45,4 +45,38 @@ def get_live_matches():
         print(f"Error : {e}")
         return []
 
+def get_match_info(match_id):
+
+    try:
+
+        url = f"{BASE_URL}/mcenter/v1/{match_id}"
+        response = requests.get(url, headers=HEADERS, timeout = 10)
+        response.raise_for_status()
+        data = response.json()
+
+        seriesname = data["seriesname"]
+        matchdesc = data["matchdesc"]
+        matchformat = data["matchformat"]
+        status = data["status"]
+        state = data["state"]
+        team1 = data["team1"]["teamname"]
+        team2 = data["team2"]["teamname"]
+        venue = data["venueinfo"]["ground"]
+        city = data["venueinfo"]["city"]
+
+        return {
+            "seriesname": seriesname,
+            "matchdesc": matchdesc,
+            "matchformat": matchformat,
+            "status": status,
+            "state": state,
+            "team1": team1,
+            "team2": team2,
+            "venue": venue,
+            "city": city
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Error : {e}")
+        return {}
+
 
