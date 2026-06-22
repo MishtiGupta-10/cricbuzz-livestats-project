@@ -39,8 +39,8 @@ st.header(f"{match['team1']} 🆚 {match['team2']}")
 st.caption(f"{match['matchdesc']}")
 
 # Status Section
-st.success(match["state"])
-st.info(match["status"])
+st.success(f"State: {match['state']}")
+st.info(f"Status: {match['status']}")
 
 st.divider()
 

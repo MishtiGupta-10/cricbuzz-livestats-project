@@ -14,7 +14,7 @@ HEADERS ={
 }
 
 def get_live_matches():
-    try: 
+    try:
 
         url = f"{BASE_URL}/matches/v1/live"
         response = requests.get(url, headers=HEADERS, timeout = 10)
@@ -79,4 +79,16 @@ def get_match_info(match_id):
         print(f"Error : {e}")
         return {}
 
+def get_scorecard(match_id):
+    try:
+        url = f"{BASE_URL}/mcenter/v1/{match_id}/hscard"
+        response = requests.get(url, headers=HEADERS, timeout = 10)
+        response.raise_for_status()
+        data = response.json()
+
+        return data["scorecard"]
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error : {e}")
+        return {}
 
