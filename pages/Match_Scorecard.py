@@ -115,3 +115,28 @@ st.dataframe(
     hide_index=True,
     width = "stretch"
 )
+
+# ---------------- FALL OF WICKETS ---------------- #
+
+if "fow" in innings and "fow" in innings["fow"]:
+
+    st.divider()
+    st.subheader("📉 Fall of Wickets")
+
+    fow_data = []
+
+    for index, wicket in enumerate(innings["fow"]["fow"], start=1):
+        fow_data.append({
+            "Wicket": index,
+            "Batter": wicket["batsmanname"],
+            "Score": wicket["runs"],
+            "Over": wicket["overnbr"]
+        })
+
+    fow_df = pd.DataFrame(fow_data)
+
+    st.dataframe(
+        fow_df,
+        hide_index=True,
+        width="stretch"
+    )
