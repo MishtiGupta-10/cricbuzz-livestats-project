@@ -26,6 +26,7 @@ class Settings:
     cache_ttl_seconds: int = int(os.getenv("CACHE_TTL_SECONDS", "60"))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     database_url: str = os.getenv("DATABASE_URL", "mysql+mysqlconnector://root:root@localhost:3306/cricinsight")
+    sync_interval_minutes: int = int(os.getenv("SYNC_INTERVAL_MINUTES", "5"))
 
 
 @lru_cache(maxsize=1)

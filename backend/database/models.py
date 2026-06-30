@@ -29,4 +29,19 @@ class SyncLogModel(BaseModel):
     sync_time: Optional[datetime] = None
     endpoint: str
     records_processed: int = 0
+    inserted_count: int = 0
+    updated_count: int = 0
+    skipped_count: int = 0
     status: str
+    error_message: Optional[str] = None
+    duration_seconds: float = 0.0
+
+class SyncSummary(BaseModel):
+    total_processed: int = 0
+    inserted: int = 0
+    updated: int = 0
+    skipped: int = 0
+    duration: float = 0.0
+    success: bool = True
+    timestamp: datetime
+    error_message: Optional[str] = None

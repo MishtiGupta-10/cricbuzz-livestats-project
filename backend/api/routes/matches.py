@@ -59,3 +59,15 @@ def get_match_details(
     """
     # Parameter validation is implicitly handled by FastAPI (match_id: int)
     return service.get_match_details(match_id)
+
+@router.get(
+    "/stored",
+    summary="Get stored matches",
+    description="Fetches all matches synchronized in the local database.",
+)
+def get_stored_matches():
+    """
+    Returns all matches stored locally, avoiding API calls.
+    """
+    from backend.database import repository
+    return repository.get_all_matches()

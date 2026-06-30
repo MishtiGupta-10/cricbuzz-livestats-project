@@ -128,15 +128,48 @@ def get_all_matches() -> List[MatchModel]:
             matches.append(MatchModel(**row))
     return matches
 
+def update_match_fields(match_id: int, changed_fields: dict) -> None:
+    if not changed_fields:
+        return
+    
+    set_clause = ", ".join([f"{k} = %s" for k in changed_fields.keys()])
+    values = list(changed_fields.values())
+    values.append(match_id)
+    
+    query = f"UPDATE `match` SET {set_clause} WHERE match_id = %s"
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, tuple(values))
+        conn.commit()
+
 def log_sync(log: SyncLogModel) -> SyncLogModel:
     query = """
-        INSERT INTO synclog (endpoint, records_processed, status)
-        VALUES (%s, %s, %s)
+        INSERT INTO synclog (endpoint, records_processed, inserted_count, updated_count, skipped_count, status, error_message, duration_seconds)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute(query, (log.endpoint, log.records_processed, log.status))
+        cursor.execute(query, (
+            log.endpoint, log.records_processed, log.inserted_count, 
+            log.updated_count, log.skipped_count, log.status, 
+            log.error_message, log.duration_seconds
+        ))
         conn.commit()
         if cursor.lastrowid:
             log.id = cursor.lastrowid
     return log
+
+def get_sync_history(limit: int = 10) -> List[dict]:
+    query = """
+        SELECT id, sync_time, endpoint, records_processed, inserted_count, 
+               updated_count, skipped_count, status, error_message, duration_seconds
+        FROM synclog
+        ORDER BY sync_time DESC
+        LIMIT %s
+    """
+    history = []
+    with get_db_connection() as conn:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, (limit,))
+        history = cursor.fetchall()
+    return history
