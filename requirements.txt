@@ -11,4 +11,3 @@ mysql-connector-python
 pydantic
 pytest
 httpx
-sqlalchemy
