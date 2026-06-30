@@ -1,4 +1,4 @@
-﻿fastapi
+fastapi
 uvicorn[standard]
 streamlit
 requests
@@ -11,3 +11,4 @@ mysql-connector-python
 pydantic
 pytest
 httpx
+sqlalchemy

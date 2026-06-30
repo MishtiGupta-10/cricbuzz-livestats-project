@@ -1,4 +1,4 @@
-﻿import os
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -25,6 +25,7 @@ class Settings:
     request_timeout_seconds: int = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "10"))
     cache_ttl_seconds: int = int(os.getenv("CACHE_TTL_SECONDS", "60"))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    database_url: str = os.getenv("DATABASE_URL", "mysql+mysqlconnector://root:root@localhost:3306/cricinsight")
 
 
 @lru_cache(maxsize=1)

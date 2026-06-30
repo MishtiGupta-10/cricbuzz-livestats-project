@@ -61,6 +61,14 @@ class CricbuzzClient:
         return parse_live_matches(data)
 
     @ttl_cache()
+    def get_recent_matches(self) -> List[LiveMatch]:
+        logger.info("Fetching recent matches from Cricbuzz API")
+        response = self._make_request("/matches/v1/recent")
+        data = response.json()
+        # For simplicity, assuming the structure is similar enough to reuse parse_live_matches
+        return parse_live_matches(data)
+
+    @ttl_cache()
     def get_match_info(self, match_id: int) -> MatchInfo:
         logger.info(f"Fetching match info for match {match_id}")
         response = self._make_request(f"/mcenter/v1/{match_id}")
