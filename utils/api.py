@@ -1,94 +1,87 @@
 import requests
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from backend.core.cache import ttl_cache
+from backend.core.config import settings
+from backend.core.logging import get_logger
 
-API_KEY = os.getenv("RAPIDAPI_KEY")
+logger = get_logger(__name__)
 
-BASE_URL = "https://cricbuzz-cricket.p.rapidapi.com"
-
-HEADERS ={
-    "x-rapidapi-key": API_KEY,
-    "x-rapidapi-host": "cricbuzz-cricket.p.rapidapi.com"
+BASE_URL = settings.cricbuzz_base_url
+HEADERS = {
+    "x-rapidapi-key": settings.rapidapi_key or "",
+    "x-rapidapi-host": settings.cricbuzz_host,
 }
 
+
+def _get_json(endpoint: str) -> dict:
+    url = f"{BASE_URL}{endpoint}"
+    response = requests.get(url, headers=HEADERS, timeout=settings.request_timeout_seconds)
+    response.raise_for_status()
+    return response.json()
+
+
+@ttl_cache()
 def get_live_matches():
     try:
-
-        url = f"{BASE_URL}/matches/v1/live"
-        response = requests.get(url, headers=HEADERS, timeout = 10)
-        response.raise_for_status()
-        data = response.json()
-
+        data = _get_json("/matches/v1/live")
         live_matches = []
 
-        for match_type in data["typeMatches"]:
-            for series in match_type["seriesMatches"]:
-                if "seriesAdWrapper" in series:
-                    for match in series["seriesAdWrapper"]["matches"]:
-                        matchId = match["matchInfo"]["matchId"]
-                        matchDesc = match["matchInfo"]["matchDesc"]
-                        team1 = match["matchInfo"]["team1"]["teamName"]
-                        team2 = match["matchInfo"]["team2"]["teamName"]
-                        status = match["matchInfo"]["status"]
-                        live_matches.append({
-                            "match_Id": matchId,
-                            "match_Desc": matchDesc,
-                            "team1": team1,
-                            "team2": team2,
-                            "status": status
-                        })
+        for match_type in data.get("typeMatches", []):
+            for series in match_type.get("seriesMatches", []):
+                series_wrapper = series.get("seriesAdWrapper")
+                if not series_wrapper:
+                    continue
+
+                for match in series_wrapper.get("matches", []):
+                    match_info = match.get("matchInfo", {})
+                    team1 = match_info.get("team1", {})
+                    team2 = match_info.get("team2", {})
+
+                    live_matches.append(
+                        {
+                            "match_Id": match_info.get("matchId"),
+                            "match_Desc": match_info.get("matchDesc", ""),
+                            "team1": team1.get("teamName", "Unknown Team"),
+                            "team2": team2.get("teamName", "Unknown Team"),
+                            "status": match_info.get("status", "Status unavailable"),
+                        }
+                    )
 
         return live_matches
-    except requests.exceptions.RequestException as e:
-        print(f"Error : {e}")
+    except requests.exceptions.RequestException as exc:
+        logger.exception("Unable to fetch live matches: %s", exc)
         return []
 
+
+@ttl_cache()
 def get_match_info(match_id):
-
     try:
-
-        url = f"{BASE_URL}/mcenter/v1/{match_id}"
-        response = requests.get(url, headers=HEADERS, timeout = 10)
-        response.raise_for_status()
-        data = response.json()
-
-        seriesname = data["seriesname"]
-        matchdesc = data["matchdesc"]
-        matchformat = data["matchformat"]
-        status = data["status"]
-        state = data["state"]
-        team1 = data["team1"]["teamname"]
-        team2 = data["team2"]["teamname"]
-        venue = data["venueinfo"]["ground"]
-        city = data["venueinfo"]["city"]
+        data = _get_json(f"/mcenter/v1/{match_id}")
+        team1 = data.get("team1", {})
+        team2 = data.get("team2", {})
+        venue = data.get("venueinfo", {})
 
         return {
-            "seriesname": seriesname,
-            "matchdesc": matchdesc,
-            "matchformat": matchformat,
-            "status": status,
-            "state": state,
-            "team1": team1,
-            "team2": team2,
-            "venue": venue,
-            "city": city
+            "seriesname": data.get("seriesname", ""),
+            "matchdesc": data.get("matchdesc", ""),
+            "matchformat": data.get("matchformat", ""),
+            "status": data.get("status", ""),
+            "state": data.get("state", ""),
+            "team1": team1.get("teamname", "Unknown Team"),
+            "team2": team2.get("teamname", "Unknown Team"),
+            "venue": venue.get("ground", ""),
+            "city": venue.get("city", ""),
         }
-    except requests.exceptions.RequestException as e:
-        print(f"Error : {e}")
+    except requests.exceptions.RequestException as exc:
+        logger.exception("Unable to fetch match details for %s: %s", match_id, exc)
         return {}
 
+
+@ttl_cache()
 def get_scorecard(match_id):
     try:
-        url = f"{BASE_URL}/mcenter/v1/{match_id}/hscard"
-        response = requests.get(url, headers=HEADERS, timeout = 10)
-        response.raise_for_status()
-        data = response.json()
-
-        return data["scorecard"]
-    
-    except requests.exceptions.RequestException as e:
-        print(f"Error : {e}")
-        return {}
-
+        data = _get_json(f"/mcenter/v1/{match_id}/hscard")
+        return data.get("scorecard", [])
+    except requests.exceptions.RequestException as exc:
+        logger.exception("Unable to fetch scorecard for %s: %s", match_id, exc)
+        return []
