@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 import contextlib
 
-from backend.api.routes import health, matches, sync
+from backend.api.routes import health, matches, sync, analytics
 from backend.core.config import settings
 from backend.core.logging import configure_logging
 from backend.core.exceptions import CricInsightError
@@ -34,6 +34,7 @@ app.add_exception_handler(Exception, generic_exception_handler)
 app.include_router(health.router, prefix=settings.api_prefix, tags=["health"])
 app.include_router(matches.router, prefix=f"{settings.api_prefix}/matches", tags=["matches"])
 app.include_router(sync.router, prefix=f"{settings.api_prefix}/sync", tags=["sync"])
+app.include_router(analytics.router, prefix=f"{settings.api_prefix}")
 
 
 @app.get("/")
